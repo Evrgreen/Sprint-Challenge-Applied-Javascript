@@ -42,11 +42,18 @@ elementTags = [
   { name: "authorPhoto", tagName: "img", props: { src: "" } },
   { name: "authorName", tagName: "span", props: { textContent: "By: " } }
 ];
-// axios
-//   .get("https://lambda-times-backend.herokuapp.com/articles")
-//   .then(response => {
-//     console.log(response);
-//   });
+axios
+  .get("https://lambda-times-backend.herokuapp.com/articles")
+  .then(response => {
+    console.log(response);
+    Object.values(response.data.articles).forEach(array => {
+      //   console.log(array);
+      array.forEach((article, index) => {
+        // console.log(article, index);
+        cardConstructor(article, elementTags);
+      });
+    });
+  });
 
 const deepCopyFunction = inObject => {
   let outObject, value, key;
@@ -127,40 +134,62 @@ function stitcher(data) {
     child,
     grandParent,
     temp;
-  data.forEach(element => {
-    if (element["data-grandparent-flag"]) {
-      grandParent = element;
-    }
+  data.forEach((element, index) => {
     if (element["data-parent-flag"] == true) {
+      console.log(index);
+      console.dir(element);
       if (parent == null) {
         parent = element;
+        // console.dir(parent);
+        // console.log(`is assigned ${index}`);
       } else {
-        temp = parent = element;
+        temp = parent;
+        parent = element;
+        console.log(`switched parents`);
         // console.log(parent, temp);
       }
     } else {
-      child = element;
+      if (element["data-grandParent-flag"]) {
+        grandParent = element;
+        console.log(`grandParent assigned`);
+        //   console.log(parent)
+      } else {
+        child = element;
+        // console.dir(parent);
+        // console.dir(child);
+      }
     }
     if (child) {
+      //   console.dir(parent);
+      //   console.dir(child);
       parent.append(child);
+      //   console.log("appended");
       if (grandParent) {
         grandParent.append(parent);
-        parent = grandparent;
+        console.log("appended gramps");
+        console.dir(grandParent);
+        parent = grandParent;
+        grandParent = null;
+        console.dir(parent);
       }
       child = null;
+      console.log(child);
     }
-    if (temp) {
-      temp.append(parent);
-    }
-    return temp;
   });
+  console.log(`out of loop`);
+  if (temp) {
+    console.log("we have temp");
+    temp.append(parent);
+    console.dir(temp);
+  }
+  return temp;
   console.log(parent);
   return parent;
 }
 function splicer(data, skeleton) {
   let count = 0;
   let templateArray = deepCopyFunction(skeleton);
-  console.log(elementTags === templateArray);
+  //   console.log(elementTags === templateArray);
   // loops through each element in skeleton
 
   finalArray = templateArray.map((item, index) => {
@@ -181,21 +210,21 @@ function splicer(data, skeleton) {
     count++;
     return item;
   });
-  console.log(`the count is ${count}`);
+  //   console.log(`the count is ${count}`);
   return finalArray;
 }
-Object.values(dummy_data).forEach(array => {
-  console.log(array);
-  array.forEach((article, index) => {
-    console.log(article, index);
-    cardConstructor(article, elementTags);
-  });
-});
-// console.log(elementTags);
+// Object.values(dummy_data).forEach(array => {
+//   //   console.log(array);
+//   array.forEach((article, index) => {
+//     // console.log(article, index);
+//     cardConstructor(article, elementTags);
+//   });
+// });
+// // console.log(elementTags);
 function cardConstructor(data, skeleton) {
   const newArray = splicer(data, skeleton);
   newArray.forEach((element, index) => {
     newArray[index] = creator(element);
   });
-  console.log(newArray);
+  document.querySelector(".cards-container").append(stitcher(newArray));
 }
