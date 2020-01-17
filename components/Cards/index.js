@@ -18,6 +18,8 @@
 //
 // Create a card for each of the articles and add the card to the DOM.
 
+// Array of template objects to map the data from the axios call to
+
 elementTags = [
   {
     name: "card",
@@ -42,159 +44,94 @@ elementTags = [
   { name: "authorPhoto", tagName: "img", props: { src: "" } },
   { name: "authorName", tagName: "span", props: { textContent: "By: " } }
 ];
+// Axios call, json object format response.data.(target object)
+//target is an object>nested objects>arrays
+
 axios
   .get("https://lambda-times-backend.herokuapp.com/articles")
   .then(response => {
-    console.log(response);
     Object.values(response.data.articles).forEach(array => {
-      //   console.log(array);
       array.forEach((article, index) => {
-        // console.log(article, index);
         cardConstructor(article, elementTags);
       });
     });
   });
 
+// Deep copies array called into it
 const deepCopyFunction = inObject => {
   let outObject, value, key;
-
   if (typeof inObject !== "object" || inObject === null) {
     return inObject; // Return the value if inObject is not an object
   }
-
   // Create an array or object to hold the values
   outObject = Array.isArray(inObject) ? [] : {};
-
   for (key in inObject) {
     value = inObject[key];
-
     // Recursively (deep) copy for nested objects, including arrays
     outObject[key] =
       typeof value === "object" && value !== null
         ? deepCopyFunction(value)
         : value;
   }
-
   return outObject;
 };
 
-const dummy_data = {
-  javascript: [
-    {
-      headline:
-        "ES8: The Next Step in the Evolution of Javascript and What it Means For Your Projects",
-      authorPhoto: "./assets/sir.jpg",
-      authorName: "SIR RUFF'N'STUFF"
-    },
-    {
-      headline:
-        "Type Coercion: Why Does NaN !== NaN? and Other Strange Occurrences",
-      authorPhoto: "./assets/bones.jpg",
-      authorName: "BONES R. LIFE"
-    },
-    {
-      headline:
-        "When to Rest, When to Spread: Why There Are Two Meanings Behind '...'",
-      authorPhoto: "./assets/puppers.jpg",
-      authorName: "PUPPER S. DOGGO"
-    },
-    {
-      headline:
-        "Typescript: Ten Things you Should Know Before Building Your Next Angular Application",
-      authorPhoto: "./assets/sir.jpg",
-      authorName: "SIR RUFF'N'STUFF"
-    }
-  ],
-  bootstrap: [
-    {
-      headline: "Bootstrap 5: Get a Sneak Peak at all the New Features",
-      authorPhoto: "./assets/fido.jpg",
-      authorName: "FIDO WALKSALOT"
-    },
-    {
-      headline:
-        "UI Frameworks: A Comparison, Which Made Our List? (Hint: Bootstrap is on it)",
-      authorPhoto: "./assets/max.jpg",
-      authorName: "MAX GOODBOYE"
-    },
-    {
-      headline:
-        "The Hottest New Bootstrap 4 Components Every Developer Needs to Know About",
-      authorPhoto: "./assets/max.jpg",
-      authorName: "MAX GOODBOYE"
-    }
-  ]
-};
-
+// creator function takes a single object and creates a HTML element, returns created element
+// spreads object.props nested object into elements's properties
 function creator(data) {
   return Object.assign(document.createElement(data.tagName), data.props);
 }
+// takes an array of html elements, returns a single HTML element with all other elements in array appended to it
 function stitcher(data) {
   let parent = null,
     child,
     grandParent,
     temp;
   data.forEach((element, index) => {
+    //loops through each element in array
+    // filters element with custom data-parent-flag property, assigns the first one to parent variable and any subsequent elements will push current oarent to temp variable and assign itself to parent
     if (element["data-parent-flag"] == true) {
-      console.log(index);
-      console.dir(element);
       if (parent == null) {
         parent = element;
-        // console.dir(parent);
-        // console.log(`is assigned ${index}`);
       } else {
         temp = parent;
         parent = element;
-        console.log(`switched parents`);
-        // console.log(parent, temp);
       }
+      //All other elements passed here
     } else {
       if (element["data-grandParent-flag"]) {
+        //filters element with custom data-grandParent-flag property
         grandParent = element;
-        console.log(`grandParent assigned`);
-        //   console.log(parent)
       } else {
-        child = element;
-        // console.dir(parent);
-        // console.dir(child);
+        child = element; //all remain elements are assigned to child property
       }
     }
     if (child) {
-      //   console.dir(parent);
-      //   console.dir(child);
+      //if child element has a value other than null, appends current child to parent
       parent.append(child);
-      //   console.log("appended");
       if (grandParent) {
+        //if grandParent element has a value other than null appends current parent to grandparent and sets grandParent to null
         grandParent.append(parent);
-        console.log("appended gramps");
-        console.dir(grandParent);
         parent = grandParent;
         grandParent = null;
-        console.dir(parent);
       }
-      child = null;
-      console.log(child);
+      child = null; //child set to null at end of loop
     }
   });
-  console.log(`out of loop`);
   if (temp) {
-    console.log("we have temp");
+    //if temp has a value current parent will be attached to temp
     temp.append(parent);
-    console.dir(temp);
   }
   return temp;
-  console.log(parent);
-  return parent;
 }
-function splicer(data, skeleton) {
-  let count = 0;
-  let templateArray = deepCopyFunction(skeleton);
-  //   console.log(elementTags === templateArray);
-  // loops through each element in skeleton
+// Function for mapping data from a axios call to a objects in an array json object to
 
+function splicer(data, skeleton) {
+  let templateArray = deepCopyFunction(skeleton); //deep copies the passed in array to prevent mutation of template
   finalArray = templateArray.map((item, index) => {
-    // checks if the items name is a key in data
+    //mapsthrough each element in template array and adds them to a new array
     if (item.name in data) {
+      // checks if the items name is a key in data
       // if skeleton item is a element with a textContent property the the items nested props objects textConent is updated with value from data
       if ("textContent" in item.props) {
         item.props[`textContent`] += data[item.name];
@@ -207,20 +144,12 @@ function splicer(data, skeleton) {
         item.props["src"] = data[item.name];
       }
     }
-    count++;
     return item;
   });
-  //   console.log(`the count is ${count}`);
-  return finalArray;
+  return finalArray; //returns the final array comprised of the objects from the skeleton argument mapped with the data from data argument
 }
-// Object.values(dummy_data).forEach(array => {
-//   //   console.log(array);
-//   array.forEach((article, index) => {
-//     // console.log(article, index);
-//     cardConstructor(article, elementTags);
-//   });
-// });
-// // console.log(elementTags);
+
+// Main constructor function,takes two objects as arguments, will be fed one object at a time from axios call and the template for the element being built, appends a fully created card to Dom
 function cardConstructor(data, skeleton) {
   const newArray = splicer(data, skeleton);
   newArray.forEach((element, index) => {
