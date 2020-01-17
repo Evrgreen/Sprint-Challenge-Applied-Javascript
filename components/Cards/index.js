@@ -17,3 +17,5 @@
 // </div>
 //
 // Create a card for each of the articles and add the card to the DOM.
+
+// elementTags = [{name:card,tagName:"div",props:{className:"headline",textContent:}},{name:Header,tagName:"div",props:{className:"",textContent:}},{name:Header,tagName:"div",props:{className:"",textContent:}},{name:Header,tagName:"div",props:{className:"",textContent:}}]
